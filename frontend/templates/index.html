@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Solver - Modern Gaming Experience</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#6366f1">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="app-title">
+                    <i class="fas fa-th"></i>
+                    Sudoku Solver
+                </h1>
+                <div class="header-controls">
+                    <button class="btn btn-icon theme-toggle" id="themeToggle" title="Toggle Theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button class="btn btn-icon" id="statsBtn" title="Statistics">
+                        <i class="fas fa-chart-bar"></i>
+                    </button>
+                    <button class="btn btn-icon" id="helpBtn" title="Help">
+                        <i class="fas fa-question-circle"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <main class="main-content">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <div class="game-info">
+                    <div class="info-item">
+                        <span class="label">Difficulty:</span>
+                        <span class="value" id="currentDifficulty">None</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Time:</span>
+                        <span class="value" id="gameTimer">00:00</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Moves:</span>
+                        <span class="value" id="moveCounter">0</span>
+                    </div>
+                </div>
+
+                <div class="difficulty-selector">
+                    <h3>New Game</h3>
+                    <div class="difficulty-buttons">
+                        <button class="btn btn-difficulty" data-difficulty="easy">
+                            <i class="fas fa-star"></i>
+                            Easy
+                        </button>
+                        <button class="btn btn-difficulty" data-difficulty="medium">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            Medium
+                        </button>
+                        <button class="btn btn-difficulty" data-difficulty="hard">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            Hard
+                        </button>
+                        <button class="btn btn-difficulty" data-difficulty="expert">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            Expert
+                        </button>
+                    </div>
+                </div>
+
+                <div class="game-controls">
+                    <h3>Game Controls</h3>
+                    <div class="control-buttons">
+                        <button class="btn btn-primary" id="solveBtn">
+                            <i class="fas fa-magic"></i>
+                            Auto Solve
+                        </button>
+                        <button class="btn btn-secondary" id="hintBtn">
+                            <i class="fas fa-lightbulb"></i>
+                            Get Hint
+                        </button>
+                        <button class="btn btn-secondary" id="validateBtn">
+                            <i class="fas fa-check-circle"></i>
+                            Validate
+                        </button>
+                        <button class="btn btn-secondary" id="pauseBtn">
+                            <i class="fas fa-pause"></i>
+                            Pause
+                        </button>
+                        <button class="btn btn-secondary" id="resetBtn">
+                            <i class="fas fa-undo"></i>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Board -->
+            <div class="game-board-container">
+                <div class="game-board" id="gameBoard">
+                    <!-- Sudoku grid will be generated here -->
+                </div>
+                
+                <!-- Mobile Number Pad -->
+                <div class="number-pad" id="numberPad">
+                    <div class="number-pad-header">
+                        <h4>Number Pad</h4>
+                        <button class="btn btn-icon" id="toggleNumberPad">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="number-pad-grid">
+                        <button class="number-btn" data-number="1">1</button>
+                        <button class="number-btn" data-number="2">2</button>
+                        <button class="number-btn" data-number="3">3</button>
+                        <button class="number-btn" data-number="4">4</button>
+                        <button class="number-btn" data-number="5">5</button>
+                        <button class="number-btn" data-number="6">6</button>
+                        <button class="number-btn" data-number="7">7</button>
+                        <button class="number-btn" data-number="8">8</button>
+                        <button class="number-btn" data-number="9">9</button>
+                        <button class="number-btn erase-btn" data-number="0">
+                            <i class="fas fa-eraser"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p id="loadingText">Generating puzzle...</p>
+            </div>
+        </div>
+
+        <!-- Success Modal -->
+        <div class="modal" id="successModal">
+            <div class="modal-content success-modal">
+                <div class="success-animation">
+                    <div class="confetti"></div>
+                    <i class="fas fa-trophy success-icon"></i>
+                </div>
+                <h2>Congratulations!</h2>
+                <p>You've successfully completed the puzzle!</p>
+                <div class="success-stats">
+                    <div class="stat">
+                        <span class="stat-label">Time:</span>
+                        <span class="stat-value" id="finalTime">--:--</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Moves:</span>
+                        <span class="stat-value" id="finalMoves">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Difficulty:</span>
+                        <span class="stat-value" id="finalDifficulty">Medium</span>
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn btn-primary" id="newGameBtn">New Game</button>
+                    <button class="btn btn-secondary" id="closeSuccessBtn">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Modal -->
+        <div class="modal" id="statsModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Statistics</h2>
+                    <button class="btn btn-icon close-modal" data-modal="statsModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="stats-content">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalGames">0</div>
+                        <div class="stat-label">Games Completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalTime">0:00:00</div>
+                        <div class="stat-label">Total Time</div>
+                    </div>
+                    <div class="best-times">
+                        <h3>Best Times</h3>
+                        <div class="best-time-item">
+                            <span>Easy:</span>
+                            <span id="bestTimeEasy">--:--</span>
+                        </div>
+                        <div class="best-time-item">
+                            <span>Medium:</span>
+                            <span id="bestTimeMedium">--:--</span>
+                        </div>
+                        <div class="best-time-item">
+                            <span>Hard:</span>
+                            <span id="bestTimeHard">--:--</span>
+                        </div>
+                        <div class="best-time-item">
+                            <span>Expert:</span>
+                            <span id="bestTimeExpert">--:--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Modal -->
+        <div class="modal" id="helpModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>How to Play</h2>
+                    <button class="btn btn-icon close-modal" data-modal="helpModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="help-content">
+                    <div class="help-section">
+                        <h3>Objective</h3>
+                        <p>Fill the 9×9 grid so that each column, each row, and each of the nine 3×3 sub-grids contains all digits from 1 to 9.</p>
+                    </div>
+                    <div class="help-section">
+                        <h3>How to Play</h3>
+                        <ul>
+                            <li>Click on any empty cell to select it</li>
+                            <li>Type a number (1-9) or click the number pad</li>
+                            <li>Use backspace or the eraser to clear a cell</li>
+                            <li>The game validates your input in real-time</li>
+                        </ul>
+                    </div>
+                    <div class="help-section">
+                        <h3>Features</h3>
+                        <ul>
+                            <li><strong>Auto Solve:</strong> Watch the AI solve the puzzle step-by-step</li>
+                            <li><strong>Hints:</strong> Get help when you're stuck</li>
+                            <li><strong>Validation:</strong> Check if your current progress is correct</li>
+                            <li><strong>Multiple Difficulties:</strong> From Easy to Expert levels</li>
+                        </ul>
+                    </div>
+                    <div class="help-section">
+                        <h3>Keyboard Shortcuts</h3>
+                        <ul>
+                            <li><kbd>1-9</kbd>: Enter numbers</li>
+                            <li><kbd>Backspace</kbd> or <kbd>Delete</kbd>: Clear cell</li>
+                            <li><kbd>Arrow Keys</kbd>: Navigate between cells</li>
+                            <li><kbd>Space</kbd>: Get hint</li>
+                            <li><kbd>Escape</kbd>: Deselect cell</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto Solve Modal -->
+        <div class="modal" id="autoSolveModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Auto Solve Options</h2>
+                    <button class="btn btn-icon close-modal" data-modal="autoSolveModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="auto-solve-content">
+                    <p>Choose how you want to solve the puzzle:</p>
+                    <div class="solve-options">
+                        <button class="btn btn-primary solve-option" id="solveInstant">
+                            <i class="fas fa-bolt"></i>
+                            Solve Instantly
+                        </button>
+                        <button class="btn btn-secondary solve-option" id="solveAnimated">
+                            <i class="fas fa-play"></i>
+                            Solve with Animation
+                        </button>
+                    </div>
+                    <div class="solve-controls" id="solveControls" style="display: none;">
+                        <div class="speed-control">
+                            <label>Animation Speed:</label>
+                            <input type="range" id="solveSpeed" min="50" max="1000" value="200" step="50">
+                            <span id="speedValue">200ms</span>
+                        </div>
+                        <div class="solve-buttons">
+                            <button class="btn btn-primary" id="startSolving">Start</button>
+                            <button class="btn btn-secondary" id="pauseSolving">Pause</button>
+                            <button class="btn btn-secondary" id="stopSolving">Stop</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio -->
+    <audio id="successSound" preload="auto">
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADVE9..." type="audio/mpeg">
+    </audio>
+
+    <script src="{{ url_for('static', filename='js/sudoku.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/animations.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+</body>
+</html>
